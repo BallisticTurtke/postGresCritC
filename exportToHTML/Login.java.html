@@ -1,0 +1,242 @@
+<html>
+<head>
+<title>Login.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cc7832;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #6897bb;}
+.s3 { color: #808080;}
+.s4 { color: #6a8759;}
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+Login.java</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">javax.swing.*</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">java.awt.event.ActionEvent</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">java.awt.event.ActionListener</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">java.sql.*</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">java.sql.Connection</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">java.sql.DriverManager</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">java.sql.PreparedStatement</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">java.sql.SQLException</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">javax.mail.Message</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">javax.mail.MessagingException</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">javax.mail.PasswordAuthentication</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">javax.mail.Session</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">javax.mail.Transport</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">javax.mail.internet.InternetAddress</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">javax.mail.internet.MimeMessage</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">java.util.Properties</span><span class="s0">;</span>
+
+<span class="s0">public class </span><span class="s1">Login {</span>
+
+    <span class="s0">private </span><span class="s1">JTextField textField1</span><span class="s0">;</span>
+    <span class="s0">private </span><span class="s1">JPasswordField passwordField</span><span class="s0">;</span>
+    <span class="s0">private </span><span class="s1">JButton logInButton</span><span class="s0">;</span>
+    <span class="s0">private </span><span class="s1">JButton forgotPasswordUsernameButton</span><span class="s0">;</span>
+    <span class="s0">private </span><span class="s1">JButton createAccountButton</span><span class="s0">;</span>
+    <span class="s0">private </span><span class="s1">JPanel rootPanel</span><span class="s0">;</span>
+    <span class="s0">private </span><span class="s1">JFrame frame</span><span class="s0">;</span>
+    <span class="s0">private static int </span><span class="s1">loggedInUserId = -</span><span class="s2">1</span><span class="s0">; </span><span class="s3">// Default to -1 to indicate no user is logged in</span>
+    <span class="s0">public static int </span><span class="s1">getLoggedInUserId() {</span>
+        <span class="s0">return </span><span class="s1">loggedInUserId</span><span class="s0">; </span><span class="s3">// Where loggedInUserId is the ID of the logged-in user</span>
+    <span class="s1">}</span>
+    <span class="s0">public static void </span><span class="s1">main(String[] args) {</span>
+        <span class="s1">SwingUtilities.invokeLater(</span><span class="s0">new </span><span class="s1">Runnable() {</span>
+            <span class="s1">@Override</span>
+            <span class="s0">public void </span><span class="s1">run() {</span>
+                <span class="s1">JFrame frame = </span><span class="s0">new </span><span class="s1">JFrame(</span><span class="s4">&quot;Login&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                <span class="s1">Login loginForm = </span><span class="s0">new </span><span class="s1">Login()</span><span class="s0">;</span>
+                <span class="s1">frame.setContentPane(loginForm.getRootPanel())</span><span class="s0">;</span>
+                <span class="s1">frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)</span><span class="s0">;</span>
+                <span class="s1">frame.pack()</span><span class="s0">;</span>
+                <span class="s1">frame.setVisible(</span><span class="s0">true</span><span class="s1">)</span><span class="s0">;</span>
+                <span class="s1">frame.setLocationRelativeTo(</span><span class="s0">null</span><span class="s1">)</span><span class="s0">;</span>
+            <span class="s1">}</span>
+        <span class="s1">})</span><span class="s0">;</span>
+    <span class="s1">}</span>
+    <span class="s0">public </span><span class="s1">Login() {</span>
+        <span class="s1">frame = </span><span class="s0">new </span><span class="s1">JFrame(</span><span class="s4">&quot;Login Page&quot;</span><span class="s1">)</span><span class="s0">;</span>
+        <span class="s1">frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)</span><span class="s0">;</span>
+        <span class="s1">forgotPasswordUsernameButton.addActionListener(</span><span class="s0">new </span><span class="s1">ActionListener() {</span>
+            <span class="s1">@Override</span>
+            <span class="s0">public void </span><span class="s1">actionPerformed(ActionEvent e) {</span>
+                <span class="s1">showForgotPasswordDialog()</span><span class="s0">;</span>
+            <span class="s1">}</span>
+        <span class="s1">})</span><span class="s0">;</span>
+        <span class="s1">logInButton.addActionListener(</span><span class="s0">new </span><span class="s1">ActionListener() {</span>
+            <span class="s1">@Override</span>
+            <span class="s0">public void </span><span class="s1">actionPerformed(ActionEvent e) {</span>
+                <span class="s1">System.out.println(</span><span class="s4">&quot;Login button clicked&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                <span class="s1">String username = textField1.getText()</span><span class="s0">;</span>
+                <span class="s1">String password = </span><span class="s0">new </span><span class="s1">String(passwordField.getPassword())</span><span class="s0">;</span>
+
+                <span class="s0">int </span><span class="s1">userId = Authenticator.authenticate(username</span><span class="s0">, </span><span class="s1">password)</span><span class="s0">;</span>
+                <span class="s0">if </span><span class="s1">(userId != -</span><span class="s2">1</span><span class="s1">) {</span>
+                    <span class="s1">JOptionPane.showMessageDialog(Login.</span><span class="s0">this</span><span class="s1">.getRootPanel()</span><span class="s0">, </span><span class="s4">&quot;Login Successful!&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                    <span class="s1">System.out.println(</span><span class="s4">&quot;Success&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                    <span class="s1">proceedToHomePage()</span><span class="s0">; </span><span class="s3">// Method to move to the next page</span>
+                    <span class="s1">loggedInUserId = userId</span><span class="s0">; </span><span class="s3">// Store the logged-in user's ID</span>
+                <span class="s1">} </span><span class="s0">else </span><span class="s1">{</span>
+                    <span class="s1">JOptionPane.showMessageDialog(Login.</span><span class="s0">this</span><span class="s1">.getRootPanel()</span><span class="s0">, </span><span class="s4">&quot;Login Failed!&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+            <span class="s0">private void </span><span class="s1">proceedToHomePage() {</span>
+                <span class="s1">frame.dispose()</span><span class="s0">; </span><span class="s3">// Assuming 'frame' is your JFrame object for the login page</span>
+                <span class="s1">Home homePage = </span><span class="s0">new </span><span class="s1">Home()</span><span class="s0">;</span>
+                <span class="s1">homePage.show()</span><span class="s0">;</span>
+            <span class="s1">}</span>
+        <span class="s1">})</span><span class="s0">;</span>
+        <span class="s1">createAccountButton.addActionListener(</span><span class="s0">new </span><span class="s1">ActionListener() {</span>
+            <span class="s1">@Override</span>
+            <span class="s0">public void </span><span class="s1">actionPerformed(ActionEvent e) {</span>
+                <span class="s1">JFrame registrationFrame = </span><span class="s0">new </span><span class="s1">JFrame(</span><span class="s4">&quot;Registration&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                <span class="s1">Registration registrationForm = </span><span class="s0">new </span><span class="s1">Registration()</span><span class="s0">;</span>
+                <span class="s1">registrationFrame.setContentPane(registrationForm.getRegistartion())</span><span class="s0">;</span>
+                <span class="s1">registrationFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE)</span><span class="s0">;</span>
+                <span class="s1">registrationFrame.pack()</span><span class="s0">;</span>
+                <span class="s1">registrationFrame.setVisible(</span><span class="s0">true</span><span class="s1">)</span><span class="s0">;</span>
+                <span class="s1">registrationFrame.setLocationRelativeTo(</span><span class="s0">null</span><span class="s1">)</span><span class="s0">;</span>
+            <span class="s1">}</span>
+        <span class="s1">})</span><span class="s0">;</span>
+    <span class="s1">}</span>
+    <span class="s0">public </span><span class="s1">JPanel getRootPanel() {</span>
+        <span class="s0">return </span><span class="s1">rootPanel</span><span class="s0">;</span>
+    <span class="s1">}</span>
+    <span class="s0">class </span><span class="s1">Authenticator {</span>
+        <span class="s0">public static int </span><span class="s1">authenticate(String username</span><span class="s0">, </span><span class="s1">String rawPassword) {</span>
+            <span class="s1">Connection conn = </span><span class="s0">null;</span>
+            <span class="s1">PreparedStatement stmt = </span><span class="s0">null;</span>
+            <span class="s1">ResultSet rs = </span><span class="s0">null;</span>
+
+            <span class="s0">try </span><span class="s1">{</span>
+                <span class="s1">conn = DriverManager.getConnection(</span>
+                        <span class="s4">&quot;jdbc:postgresql://localhost:5432/postgres&quot;</span><span class="s0">,</span>
+                        <span class="s4">&quot;postgres&quot;</span><span class="s0">,</span>
+                        <span class="s4">&quot;Nart1207&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                <span class="s1">String sql = </span><span class="s4">&quot;SELECT id, password FROM users WHERE username = ?&quot;</span><span class="s0">;</span>
+                <span class="s1">stmt = conn.prepareStatement(sql)</span><span class="s0">;</span>
+                <span class="s1">stmt.setString(</span><span class="s2">1</span><span class="s0">, </span><span class="s1">username)</span><span class="s0">;</span>
+
+                <span class="s1">rs = stmt.executeQuery()</span><span class="s0">;</span>
+
+                <span class="s0">if </span><span class="s1">(rs.next()) {</span>
+                    <span class="s1">String storedHashedPassword = rs.getString(</span><span class="s4">&quot;password&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                    <span class="s0">if </span><span class="s1">(PasswordHasher.matches(rawPassword</span><span class="s0">, </span><span class="s1">storedHashedPassword)) {</span>
+                        <span class="s0">return </span><span class="s1">rs.getInt(</span><span class="s4">&quot;id&quot;</span><span class="s1">)</span><span class="s0">; </span><span class="s3">// Return user ID</span>
+                    <span class="s1">}</span>
+                <span class="s1">}</span>
+                <span class="s0">return </span><span class="s1">-</span><span class="s2">1</span><span class="s0">; </span><span class="s3">// Authentication failed</span>
+            <span class="s1">} </span><span class="s0">catch </span><span class="s1">(SQLException e) {</span>
+                <span class="s1">e.printStackTrace()</span><span class="s0">;</span>
+                <span class="s0">return </span><span class="s1">-</span><span class="s2">1</span><span class="s0">;</span>
+            <span class="s1">} </span><span class="s0">finally </span><span class="s1">{</span>
+                <span class="s0">try </span><span class="s1">{</span>
+                    <span class="s0">if </span><span class="s1">(rs != </span><span class="s0">null</span><span class="s1">) rs.close()</span><span class="s0">;</span>
+                    <span class="s0">if </span><span class="s1">(stmt != </span><span class="s0">null</span><span class="s1">) stmt.close()</span><span class="s0">;</span>
+                    <span class="s0">if </span><span class="s1">(conn != </span><span class="s0">null</span><span class="s1">) conn.close()</span><span class="s0">;</span>
+                <span class="s1">} </span><span class="s0">catch </span><span class="s1">(SQLException e) {</span>
+                    <span class="s1">e.printStackTrace()</span><span class="s0">;</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+
+    <span class="s0">public class </span><span class="s1">PasswordHasher {</span>
+
+        <span class="s0">private static final </span><span class="s1">BCryptPasswordEncoder encoder = </span><span class="s0">new </span><span class="s1">BCryptPasswordEncoder()</span><span class="s0">;</span>
+
+        <span class="s0">public static </span><span class="s1">String hashPassword(String rawPassword) {</span>
+            <span class="s0">return </span><span class="s1">encoder.encode(rawPassword)</span><span class="s0">;</span>
+        <span class="s1">}</span>
+
+        <span class="s0">public static boolean </span><span class="s1">matches(String rawPassword</span><span class="s0">, </span><span class="s1">String encodedPassword) {</span>
+            <span class="s0">return </span><span class="s1">encoder.matches(rawPassword</span><span class="s0">, </span><span class="s1">encodedPassword)</span><span class="s0">;</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+    <span class="s0">private void </span><span class="s1">showForgotPasswordDialog() {</span>
+        <span class="s1">String email = JOptionPane.showInputDialog(frame</span><span class="s0">, </span><span class="s4">&quot;Enter your email:&quot;</span><span class="s1">)</span><span class="s0">;</span>
+        <span class="s0">if </span><span class="s1">(email != </span><span class="s0">null </span><span class="s1">&amp;&amp; !email.isEmpty()) {</span>
+            <span class="s1">String password = getPasswordForEmail(email)</span><span class="s0">;</span>
+            <span class="s0">if </span><span class="s1">(password != </span><span class="s0">null</span><span class="s1">) {</span>
+                <span class="s1">sendPasswordEmail(email</span><span class="s0">, </span><span class="s1">password)</span><span class="s0">;  </span><span class="s3">// Implement this method to send the email</span>
+            <span class="s1">} </span><span class="s0">else </span><span class="s1">{</span>
+                <span class="s1">JOptionPane.showMessageDialog(frame</span><span class="s0">, </span><span class="s4">&quot;No account found with that email.&quot;</span><span class="s0">, </span><span class="s4">&quot;Error&quot;</span><span class="s0">, </span><span class="s1">JOptionPane.ERROR_MESSAGE)</span><span class="s0">;</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+    <span class="s0">private </span><span class="s1">String getPasswordForEmail(String email) {</span>
+        <span class="s1">Connection conn = </span><span class="s0">null;</span>
+        <span class="s1">PreparedStatement pstmt = </span><span class="s0">null;</span>
+        <span class="s1">ResultSet rs = </span><span class="s0">null;</span>
+
+        <span class="s0">try </span><span class="s1">{</span>
+            <span class="s1">conn = DriverManager.getConnection(</span><span class="s4">&quot;jdbc:postgresql://localhost:5432/postgres&quot;</span><span class="s0">, </span><span class="s4">&quot;postgres&quot;</span><span class="s0">, </span><span class="s4">&quot;Nart1207&quot;</span><span class="s1">)</span><span class="s0">;</span>
+            <span class="s1">String sql = </span><span class="s4">&quot;SELECT password FROM users WHERE email = ?&quot;</span><span class="s0">;</span>
+            <span class="s1">pstmt = conn.prepareStatement(sql)</span><span class="s0">;</span>
+            <span class="s1">pstmt.setString(</span><span class="s2">1</span><span class="s0">, </span><span class="s1">email)</span><span class="s0">;</span>
+
+
+
+            <span class="s1">rs = pstmt.executeQuery()</span><span class="s0">;</span>
+            <span class="s0">if </span><span class="s1">(rs.next()) {</span>
+                <span class="s0">return </span><span class="s1">rs.getString(</span><span class="s4">&quot;password&quot;</span><span class="s1">)</span><span class="s0">; </span><span class="s3">// Assuming passwords are stored in plain text (not recommended)</span>
+            <span class="s1">}</span>
+        <span class="s1">} </span><span class="s0">catch </span><span class="s1">(SQLException e) {</span>
+            <span class="s1">e.printStackTrace()</span><span class="s0">;</span>
+        <span class="s1">} </span><span class="s0">finally </span><span class="s1">{</span>
+            <span class="s0">try </span><span class="s1">{</span>
+                <span class="s0">if </span><span class="s1">(rs != </span><span class="s0">null</span><span class="s1">) rs.close()</span><span class="s0">;</span>
+                <span class="s0">if </span><span class="s1">(pstmt != </span><span class="s0">null</span><span class="s1">) pstmt.close()</span><span class="s0">;</span>
+                <span class="s0">if </span><span class="s1">(conn != </span><span class="s0">null</span><span class="s1">) conn.close()</span><span class="s0">;</span>
+            <span class="s1">} </span><span class="s0">catch </span><span class="s1">(SQLException ex) {</span>
+                <span class="s1">ex.printStackTrace()</span><span class="s0">;</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+        <span class="s0">return null;</span>
+    <span class="s1">}</span>
+    <span class="s0">private void </span><span class="s1">sendPasswordEmail(String email</span><span class="s0">, </span><span class="s1">String password) {</span>
+        <span class="s1">Properties prop = </span><span class="s0">new </span><span class="s1">Properties()</span><span class="s0">;</span>
+        <span class="s1">prop.put(</span><span class="s4">&quot;mail.smtp.host&quot;</span><span class="s0">, </span><span class="s4">&quot;smtp-mail.outlook.com&quot;</span><span class="s1">)</span><span class="s0">;</span>
+        <span class="s1">prop.put(</span><span class="s4">&quot;mail.smtp.port&quot;</span><span class="s0">, </span><span class="s4">&quot;587&quot;</span><span class="s1">)</span><span class="s0">;</span>
+        <span class="s1">prop.put(</span><span class="s4">&quot;mail.smtp.auth&quot;</span><span class="s0">, </span><span class="s4">&quot;true&quot;</span><span class="s1">)</span><span class="s0">;</span>
+        <span class="s1">prop.put(</span><span class="s4">&quot;mail.smtp.starttls.enable&quot;</span><span class="s0">, </span><span class="s4">&quot;true&quot;</span><span class="s1">)</span><span class="s0">; </span><span class="s3">//TLS</span>
+
+        <span class="s3">// Authenticator for SMTP</span>
+        <span class="s1">String Aemail = </span><span class="s4">&quot;kolomuani79@outlook.com&quot;</span><span class="s0">;</span>
+        <span class="s1">String appPassword = </span><span class="s4">&quot;RonTon1207!&quot;</span><span class="s0">; </span><span class="s3">// Use the generated App Password</span>
+
+        <span class="s1">Session session = Session.getInstance(prop</span><span class="s0">,</span>
+                <span class="s0">new </span><span class="s1">javax.mail.Authenticator() {</span>
+                    <span class="s0">protected </span><span class="s1">PasswordAuthentication getPasswordAuthentication() {</span>
+                        <span class="s0">return new </span><span class="s1">PasswordAuthentication(Aemail</span><span class="s0">, </span><span class="s1">appPassword)</span><span class="s0">;</span>
+                    <span class="s1">}</span>
+                <span class="s1">})</span><span class="s0">;</span>
+
+        <span class="s0">try </span><span class="s1">{</span>
+            <span class="s1">Message message = </span><span class="s0">new </span><span class="s1">MimeMessage(session)</span><span class="s0">;</span>
+            <span class="s1">message.setFrom(</span><span class="s0">new </span><span class="s1">InternetAddress(</span><span class="s4">&quot;kolomuani79@outlook.com&quot;</span><span class="s1">))</span><span class="s0">;</span>
+            <span class="s1">message.setRecipients(</span>
+                    <span class="s1">Message.RecipientType.TO</span><span class="s0">,</span>
+                    <span class="s1">InternetAddress.parse(email)</span>
+            <span class="s1">)</span><span class="s0">;</span>
+            <span class="s1">message.setSubject(</span><span class="s4">&quot;Your Password&quot;</span><span class="s1">)</span><span class="s0">;</span>
+            <span class="s1">message.setText(</span><span class="s4">&quot;Dear User,</span><span class="s0">\n\n </span><span class="s4">Here is your password: &quot; </span><span class="s1">+ password)</span><span class="s0">;</span>
+
+            <span class="s1">Transport.send(message)</span><span class="s0">;</span>
+            <span class="s1">System.out.println(</span><span class="s4">&quot;Email sent successfully&quot;</span><span class="s1">)</span><span class="s0">;</span>
+        <span class="s1">} </span><span class="s0">catch </span><span class="s1">(MessagingException e) {</span>
+            <span class="s1">e.printStackTrace()</span><span class="s0">;</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+<span class="s1">}</span></pre>
+</body>
+</html>
